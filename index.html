@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Arcana Collection — Coleções</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Montserrat:wght@300;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand" data-link="#/">Arcana Collection</div>
+      <nav class="nav" id="mainNav">
+        <a href="#/">Início</a>
+        <a href="#/items">Itens</a>
+        <a href="#/create-item">Adicionar Item</a>
+        <a href="#/create-user" id="navCreateUser">Criar Perfil</a>
+        <a href="#/users/me" id="navMyProfile" style="display:none">Meu Perfil</a>
+        <a href="#/" id="navLogout" style="display:none">Sair</a>
+      </nav>
+      <div class="search-wrap">
+        <input id="search" placeholder="Buscar item, usuário, raridade..." aria-label="Buscar" />
+      </div>
+    </header>
+
+    <main id="view" class="view" role="main"></main>
+
+    <footer class="footer">
+      <div>© Arcana Collection — Estética de mapa antigo</div>
+      <div class="footer-actions">
+        <button id="seedReset" class="btn small ghost">Resetar dados</button>
+        <button id="exportData" class="btn small">Exportar JSON</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Templates (mantidos iguais) -->
+  <template id="tpl-home">
+    <section class="hero">
+      <h1>Arcana Collection</h1>
+      <p class="lead">Descubra coleções, troque descobertas e encontre raridades inspiradas em mapas antigos.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#/items">Explorar Itens</a>
+        <a class="btn ghost" href="#/create-user">Criar Perfil</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>Itens em destaque</h2>
+        <div class="panel-head-meta">Curadoria</div>
+      </header>
+      <div id="featured" class="card-grid"></div>
+    </section>
+
+    <section class="panel small">
+      <h3>Últimos perfis</h3>
+      <div id="recentUsers" class="user-strip"></div>
+    </section>
+  </template>
+
+  <template id="tpl-items">
+    <section class="panel">
+      <header class="panel-head">
+        <h2>Todos os itens</h2>
+        <div class="controls-row">
+          <div class="filters">
+            <select id="f-rarity"><option value="">Todas raridades</option><option>Comum</option><option>Incomum</option><option>Raro</option><option>Épico</option><option>Legendário</option></select>
+            <select id="f-condition"><option value="">Todas condições</option><option>Excelente</option><option>Muito boa</option><option>Boa</option><option>Justo</option><option>Ruim</option></select>
+            <select id="f-forSale"><option value="">Todos</option><option value="true">À venda</option><option value="false">Não à venda</option></select>
+          </div>
+          <div class="sort">
+            <label>Ordenar:</label>
+            <select id="sortSelect"><option value="newest">Mais novos</option><option value="oldest">Mais antigos</option><option value="price-asc">Preço ↑</option><option value="price-desc">Preço ↓</option><option value="rarity">Raridade</option></select>
+          </div>
+        </div>
+      </header>
+
+      <div id="itemsList" class="card-grid"></div>
+
+      <div class="pager">
+        <button id="prevPage" class="btn small ghost">Anterior</button>
+        <span id="pageInfo" class="muted">Página 1</span>
+        <button id="nextPage" class="btn small">Próxima</button>
+      </div>
+    </section>
+  </template>
+
+  <template id="tpl-item">
+    <section class="panel item-page">
+      <div class="item-main">
+        <div class="item-media">
+          <img id="item-img" class="item-img" alt="imagem do item" />
+          <div class="thumbs" id="item-thumbs"></div>
+        </div>
+
+        <div class="item-info">
+          <h2 id="item-title"></h2>
+          <div class="meta-row">
+            <span id="item-rarity" class="pill"></span>
+            <span id="item-condition" class="pill"></span>
+            <span id="item-date" class="muted small"></span>
+          </div>
+
+          <p id="item-desc" class="desc"></p>
+
+          <div class="owner-line">Proprietário: <a id="item-owner" href="#">Perfil</a></div>
+          <div class="price-line">Status: <span id="item-sale"></span></div>
+
+          <div class="actions-row">
+            <button id="toggleLike" class="btn">Curtir <span id="likeCount" class="muted small">0</span></button>
+            <button id="toggleSale" class="btn ghost small">Alternar venda</button>
+            <button id="editItem" class="btn small">Editar</button>
+            <button id="deleteItem" class="btn danger small">Excluir</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="panel small">
+        <h4>Histórico e informações</h4>
+        <ul id="item-info-list" class="info-list"></ul>
+      </section>
+    </section>
+  </template>
+
+  <template id="tpl-user">
+    <section class="panel">
+      <div class="profile">
+        <div class="avatar" id="user-avatar"></div>
+        <div class="profile-info">
+          <h2 id="user-name"></h2>
+          <p id="user-bio" class="muted"></p>
+          <div class="profile-actions">
+            <button id="followBtn" class="btn small">Seguir</button>
+            <a id="editProfile" class="btn small ghost" href="#/create-user?edit=">Editar</a>
+          </div>
+        </div>
+      </div>
+
+      <h3>Itens de <span id="user-name2"></span></h3>
+      <div id="user-items" class="card-grid"></div>
+    </section>
+  </template>
+
+  <template id="tpl-form-item">
+    <section class="panel">
+      <h2 id="form-title">Novo item</h2>
+      <form id="itemForm" class="form">
+        <div class="cols">
+          <label>Título<input name="title" required /></label>
+          <label>Raridade
+            <select name="rarity">
+              <option>Comum</option><option>Incomum</option><option>Raro</option><option>Épico</option><option>Legendário</option>
+            </select>
+          </label>
+          <label>Condição<input name="condition" placeholder="Mint, Near Mint, Good..." /></label>
+        </div>
+
+        <label>Descrição<textarea name="description"></textarea></label>
+
+        <div class="cols">
+          <label>Data adquirida<input type="date" name="dateAcquired" /></label>
+          <label>Imagem (URL)<input name="image" placeholder="https://..." /></label>
+        </div>
+
+        <label>Proprietário (selecionar)</label>
+        <select id="ownerSelect" name="owner"></select>
+
+        <div class="row">
+          <label><input type="checkbox" name="isForSale" /> À venda</label>
+          <label>Preço (R$)<input type="number" name="price" min="0" step="0.01" /></label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn">Salvar</button>
+          <a class="btn ghost" href="#/items">Cancelar</a>
+        </div>
+      </form>
+    </section>
+  </template>
+
+  <template id="tpl-form-user">
+    <section class="panel">
+      <h2 id="form-user-title">Criar Perfil</h2>
+      <form id="userForm" class="form">
+        <div class="cols">
+          <label>Nome de usuário<input name="username" required /></label>
+          <label>Nome exibido<input name="displayName" /></label>
+        </div>
+
+        <label>Biografia<textarea name="bio" placeholder="Fale sobre sua coleção..."></textarea></label>
+        <label>Avatar (URL)<input name="avatarUrl" placeholder="https://..." /></label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn">Criar / Salvar</button>
+          <a class="btn ghost" href="#/">Cancelar</a>
+        </div>
+      </form>
+    </section>
+  </template>
+
+  <!-- Modal container -->
+  <div id="modal" class="modal" aria-hidden="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
